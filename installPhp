@@ -1,0 +1,46 @@
+tar –zxvf php-7.1.11.tar.gz
+cd php-7.1.11/
+./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc --enable-fpm --with-mysql 
+--with-openssl --with-mcrypt --with-zlib --with-bz2 --with-gd --enable-zip --with-mysqli=mysqlnd 
+--with-pdo-mysql=mysqlnd enable-pdo --enable-mbstring --enable-json --with-curl --with-msgpack --with-amqp
+make & make install
+cp php.ini-development /usr/local/php/etc/php.ini
+cp /usr/local/php/etc/php-fpm.conf.default /usr/local/php/etc/php-fpm.conf
+cp sapi/fpm/php-fpm /usr/local/php/bin   
+cp sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+chmod +x /etc/init.d/php-fpm
+
+配置php.ini
+extension_dir = "/usr/local/php/lib/php/extensions/no-debug-non-zts-20160303/"
+
+配置php-fpm.conf
+pid = /usr/local/php/var/run/php-fpm.pid    ;防止进程启动多个副本。只有获得pid文件(固定路径固定文件名)写入权限(F_WRLCK)的进程才能正常启动并把自身的PID写入该文件中。其它同一个程序的多余进程则自动退出
+error_log = /usr/local/php/var/log/php-fpm.log
+log_level = notice
+emergency_restart_threshold = 10
+emergency_restart_interval = 10 ;在emergency_restart_interval所出现SIGSEGV或者SIGBUS错误的php-cgi进程数如果超过 emergency_restart_threshold个，php-fpm就会优雅重启
+process_control_timeout = 10  ;设置子进程接受主进程复用信号的超时时间
+[www]
+listen = /dev/shm/php7-cgi.sock ;fpm监听端口，即nginx中php处理的地址
+listen.backlog=4096 ;backlog数，-1表示无限制
+listen.owner = nobody
+listen.group = nobody
+listen.mode = 0666 ;unix socket设置选项
+user = nobody
+group = nobody ;启动进程的帐户和组
+pm = dynamic  ;php对子进程的三种管理方式, tatic: php-fpm运行时直接fork出 pm.max_chindren个子进程
+              ;dynamic: 运行时fork出pm.start_servers个进程，随着负载的情况，动态的调整，最多不超过pm.max_children个进程。
+              ;同时，保证闲置进程数不少于pm.min_spare_servers数量，否则新的进程会被创建，当然也不是无限制的创建，
+              ;最多闲置进程不超过pm.max_spare_servers数量，超过则一些闲置进程被清理
+              ;ondemand: 当有请求时，创建进程，启动不创建，最多不超过pm.max_chindren进程数，当进程闲置会在pm.process_idle_timeout秒后被及时释放
+pm.max_children = 148 
+pm.start_servers = 98
+pm.min_spare_servers = 74
+pm.max_spare_servers = 148 
+pm.max_requests = 102400
+request_terminate_timeout = 600 ;设置单个请求的超时中止时间, 设置为 '0' 表示 'Off'
+request_slowlog_timeout = 600 ;当一个请求该设置的超时时间后，就会将对应的PHP调用堆栈信息完整写入到慢日志中, 设置为 '0' 表示 'Off'
+slowlog =  /usr/local/php/var/log/php-fpm.slow
+access.format = %R - %u %t "%m %r%Q%q" %s %f %{mili}d %{kilo}M %C%%
+pm.status_path = /php7fpmstatus ;注册的URI，以展示php-fpm状态的统计信息, 可在nginx中配置使用
+include=/usr/local/php/etc/php-fpm.d/*.conf
