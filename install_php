@@ -1,5 +1,6 @@
-tar –zxvf php-7.1.11.tar.gz
-cd php-7.1.11/
+wget -O php-7.2.11.tar.gz http://cn2.php.net/get/php-7.2.11.tar.gz/from/this/mirror
+tar –zxvf php-7.2.11.tar.gz
+cd php-7.2.11/
 ./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc --enable-fpm --with-mysql 
 --with-openssl --with-mcrypt --with-zlib --with-bz2 --with-gd --enable-zip --with-mysqli=mysqlnd 
 --with-pdo-mysql=mysqlnd enable-pdo --enable-mbstring --enable-json --with-curl --with-msgpack --with-amqp
