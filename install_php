@@ -1,15 +1,25 @@
-wget -O php-7.2.11.tar.gz http://cn2.php.net/get/php-7.2.11.tar.gz/from/this/mirror
-tar –zxvf php-7.2.11.tar.gz
-cd php-7.2.11/
-./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc --enable-fpm --with-mysql 
---with-openssl --with-mcrypt --with-zlib --with-bz2 --with-gd --enable-zip --with-mysqli=mysqlnd 
---with-pdo-mysql=mysqlnd enable-pdo --enable-mbstring --enable-json --with-curl --with-msgpack --with-amqp
-make & make install
-cp php.ini-development /usr/local/php/etc/php.ini
-cp /usr/local/php/etc/php-fpm.conf.default /usr/local/php/etc/php-fpm.conf
-cp sapi/fpm/php-fpm /usr/local/php/bin   
-cp sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
-chmod +x /etc/init.d/php-fpm
+git安装：yum install git-core
+php安装：wget  http://cn2.php.NET/distributions/php-7.3.2.tar.gz
+		 tar zxf php-7.3.2.tar.gz
+		 ./configure --enable-fpm --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc --with-pdo-mysql
+如果没有gcc：yum install gcc
+如果没有libxml2：yum install libxml2-devel
+		make && make install
+		cp  php.ini-development /usr/local/php/etc/php.ini
+		cp sapi/fpm/init.d.php-fpm /etc/init.d/php7-fpm
+		chmod +x /etc/init.d/php7-fpm
+		cd /usr/local/php/etc
+		cp php-fpm.conf.default php-fpm.conf
+		cp php-fpm.d/www.conf.default  php-fpm.d/www.conf
+		/etc/init.d/php7-fpm  start
+
+nginx安装：wget http://nginx.org/download/nginx-1.9.9.tar.gz
+	三个依赖：wget http://www.openssl.org/source/openssl-fips-2.0.16.tar.gz
+			  wget http://www.zlib.net/zlib-1.2.11.tar.gz
+			  wget ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-8.42.tar.gz
+	分别解压安装：./configure（如果没有该文件那就执行这个 ./config） && make && make install
+	没有c++：yum install -y gcc gcc-c++
+	如果nginx不能启动：ln -s /usr/local/lib/libpcre.so.1 /lib【64】
 
 配置php.ini
 extension_dir = "/usr/local/php/lib/php/extensions/no-debug-non-zts-20160303/"
