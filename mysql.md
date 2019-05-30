@@ -216,3 +216,7 @@ pop队列，主播增加金币
 2.slave一个线程用于同步bin-log到中继日志(relay log)，另一个线程用于重做中继日志中的事件
 
 ![image](https://github.com/Wang520YY/wiki/blob/master/images/mysql_copy.png)
+
+单点故障保证高可用：keepalived就可以自动切换master，实现vip漂移
+
+
