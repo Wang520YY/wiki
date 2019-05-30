@@ -31,4 +31,4 @@ InnerDb聚簇索引
 非聚簇索引，叶子节点有个指针指向对应的数据块
 
 MyIsam非聚簇索引
-![image](https://raw.githubusercontent.com/Wang520YY/wiki/master/images/myIsam_index.png)
+![image](https://github.com/Wang520YY/wiki/blob/master/images/myIsam_index.png)
