@@ -167,11 +167,50 @@ extra：using temporary，用到临时表，对非驱动表排序就会用到临
      
      Hash分区主要用来分散热点读，partition by hash(expr); partitins <num>; N = MOD(expr, num)
     
-分库分表原理：通过hash算法或工具将一张表垂直或水平物理切分
 
-水平分割：可根据活跃度，不同地区进行切分，需要union查询
+水平分表：
 
-垂直分表：常用列和不常用列拆分等，需要join查询
+1.可根据活跃度，不同地区进行切分
+
+2.hash拆分：ID%3这样就分为三张表
+
+3.范围拆分：比如每台服务器计划存放一个亿的数据,先将数据写入服务器A.一旦服务器A写满,则将数据写入服务器B,以此类推.这种方式的好处是扩展方便.数据在各个服务器上分布均匀
+
+垂直分表：常用列、不常用列、大字段列拆分等，需要join查询
+
+全局ID生成器
+1.uuid，不是自增且非数字，查询效率低
+2.redis的incr自增，可以多台一起按照奇偶数，步长生成
+
+hash获取所在表
+functiong get_hash($tName, $id, $c = 100) {
+    $hash = sprintf("%u", crc32($id));
+    $hash = intval(fmod($hash, $c));
+    return $tName . '_' . $hash;
+}
+
+分表后分页查询
+1.union查询，不推荐，效率低下
+2.维护一张主键和必要索引的总表
+3.查询每张表的数据再合并排序返回
+
+最终一致性2：
+用户给主播送金币，扣除用户金币，push队列
+pop队列，主播增加金币
+定时检查对比用户减少和主播增加进行事务补偿问题排查
+![image](https://github.com/Wang520YY/wiki/blob/master/images/gold.png)
+
+最终一致性2：
+维护一个全局事务表和分表消息日志表
+比如转账，向队列push两个，一个为用户A -100，另一个为用户B +100
+不管是数据库A或B，队列获取失败都进行回滚
+事务ID，是否存在，如果没有不处理
+队列日志ID，是否发过，如果有不处理，因为可能是消息超时重发导致
+检查tran_log和msg_log.如果有不一致的情况,则进行事务补偿
+
+
 
 # 主从复制原理
 复制开始，从库创建两个线程，1.复制主库的bin-log；2.读取从库复制bin-log后写入relaylog的更新
+
+![image](https://github.com/Wang520YY/wiki/blob/master/images/mysql_copy.png)
