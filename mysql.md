@@ -211,6 +211,8 @@ pop队列，主播增加金币
 
 
 # 主从复制原理
-复制开始，从库创建两个线程，1.复制主库的bin-log；2.读取从库复制bin-log后写入relaylog的更新
+1.master记录更改的记录到bin-log(binary log events实质是二级制日志事件)
+
+2.slave一个线程用于同步bin-log到中继日志(relay log)，另一个线程用于重做中继日志中的事件
 
 ![image](https://github.com/Wang520YY/wiki/blob/master/images/mysql_copy.png)
