@@ -140,13 +140,27 @@ MyIsam：
 
 
 # explain
-type：
+**type**
 
-system(const特例，表仅一行) > const(primary或unique) > eq_ref(连表用到primary或unique) > 
+system(const特例，表仅一行)
 
-ref(普通索引) > >index_merge(当使用or都用到索引，会合并结果集) > range(区间) > index(使用了索引的排序) > all
+const(primary或unique) 
 
-extra：using temporary，用到临时表，对非驱动表排序就会用到临时表，因为会对非驱动表循环查询合并后(临时表)的结果进行排序；
+eq_ref(连表用到primary或unique) > 
+
+ref(普通索引) 
+
+index_merge(当使用or都用到索引，会合并结果集) 
+
+range(区间) 
+
+index(遍历索引树，使用了索引的排序)
+
+all
+
+**extra**
+       
+       using temporary，用到临时表，对非驱动表排序就会用到临时表，因为会对非驱动表循环查询合并后(临时表)的结果进行排序；
 
        using filesort，用到了mysql内部的文件排序
        
