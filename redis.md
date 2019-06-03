@@ -76,11 +76,19 @@ fork子进程将内存数据写入硬盘临时文件，父进程继续接收命�
 
 **配置AOF自动重写条件**
 
+为了解决AOF文件体积膨胀的问题，Redis提供了AOF重写功能，新的AOF文件不会包含任何浪费空间的冗余命令，重写的原理和rdb主从复制原理一样(父子进程)
+
 auto-aof-rewrite-percentage 100 当AOF文件大小超过上一次重写时AOF文件大小的百分之多少时会再次进行重写
 
 auto-aof-rewirte-min-size 64mb 允许重写的最小AOF文件大小
 
-appendfsync everysec 每秒一次；always，每次写入都会执行，不建议，安全但是很慢；no 不主动进行，完全交由操作系统30秒一次
+**同步间隔**
+
+appendfsync everysec 每秒一次
+
+always，每次写入都会执行，不建议，安全但是很慢
+
+no 不主动进行，完全交由操作系统30秒一次，最快但也最不安全
 
 # 哨兵
 哨兵是在主从分离的基础上，Master状态监测，如果Master 异常，则会进行Master-slave 转换，将其中一个Slave作为Master，将之前的Master作为Slave
