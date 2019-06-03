@@ -231,18 +231,22 @@ pop队列，主播增加金币
 
 ![image](https://github.com/Wang520YY/wiki/blob/master/images/mysql_copy.png)
 
-单点故障保证高可用：keepalived就可以自动切换master，实现vip漂移
-
-**问题及解决方法**
+## 问题及解决方法
 主库宕机，数据丢失；从库只有一个sql Thread，主库写压力大时，复制延迟较长
 
-1.半同步复制，解决数据丢失问题，性能有一定的降低，再确保同步成功后，master才返回客户端succss
+**1.半同步复制**
+
+解决数据丢失问题，性能有一定的降低，再确保同步成功后，master才返回客户端succss
 
 ![image](https://github.com/Wang520YY/wiki/blob/master/images/synccopy.png)
 
-2.并行复制，解决从库复制延迟问题，从库多线程apply binlog，set global salve_parallel_workers=10;设置sql线程为10
+**2.并行复制**
 
-3.级联复制，A->B->C，B中添加log-bin = mysql-bin;log_slave_updates = 1;将会把A的binlog记录到自己的binlog中，A是B的主，B是C的主
+解决从库复制延迟问题，从库多线程apply binlog，set global salve_parallel_workers=10;设置sql线程为10
 
+**3.级联复制**
 
+A->B->C，B中添加log-bin = mysql-bin;log_slave_updates = 1;将会把A的binlog记录到自己的binlog中，A是B的主，B是C的主
+
+**单点故障保证高可用：keepalived就可以自动切换master，实现vip漂移**
 
