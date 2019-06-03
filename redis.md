@@ -16,7 +16,13 @@
 
 如果是手动连接到master，重连后，从服务器会读取本地的rdb恢复数据，不会自动连接到master
 
-**主从复制工作原理**
+## 主从复制工作原理
+
+主从刚开始连接，进行全量同步，然后再进行增量同步，也可以在热河时候发起全量同步
+
+如果增量同步不成功，进行全量同步，主从复制对于master和slave都是非阻塞的，可以接收外界请求
+
+**全量同步**
 
 ![image](https://github.com/Wang520YY/wiki/blob/master/images/redis_copy.jpg)
 
@@ -32,6 +38,50 @@
 
 6.slave完成对快照载入，开始接收命令请求，并执行来自master缓存区的写命令
 
+**增量同步**
+
+master每执行一个写命令就会向slave发送相同的写命令，然后slave执行
+
+**部分同步**
+
+再2.8后，当主从断连后，主从可以不进行全量同步，而进行部分同步
+
+master为每个slave维护了一份同步备份日志和同步标识，slave再重连后会携带同步标识和偏移量，如果在同步日志中有，那就从这个偏移量开始同步
+
+**无盘复制**
+
+主要用于master磁盘空间有限并且网络状况良好，master直接开启一个socket将rdb文件发送给slave
+
+## 持久化
+
+**RDB方式**
+
+当指定时间内被更改的键超过指定数值就会进行快照；例如 save 300 10 三百秒内有至少10个键被更改则进行快照，可以设置多个
+
+一旦Redis异常退出，就会丢失最后一次快照以后更改的所有数据
+
+**RDB工作原理**
+
+fork子进程将内存数据写入硬盘临时文件，父进程继续接收命令，当子进程写完所有数据临时文件会替换旧的RDB
+
+**RDB手动快照**
+
+发送save或bgsave命令，save命令会阻塞其它请求，bgsave会非阻塞fork子进程进行快照
+
+**AOF方式**
+
+通过设置appendonly yes开启，redis启动时会逐个执行AOF文件中的命令来讲硬盘数据载入内存，比RDB慢
+
+一旦Redis异常退出，就会丢失最后一次同步以后更改的所有数据，一条或一秒的数据
+
+**配置AOF自动重写条件**
+
+auto-aof-rewrite-percentage 100 当AOF文件大小超过上一次重写时AOF文件大小的百分之多少时会再次进行重写
+
+auto-aof-rewirte-min-size 64mb 允许重写的最小AOF文件大小
+
+appendfsync everysec 每秒一次；always，每次写入都会执行，不建议，安全但是很慢；no 不主动进行，完全交由操作系统30秒一次
+
 # 哨兵
 哨兵是在主从分离的基础上，Master状态监测，如果Master 异常，则会进行Master-slave 转换，将其中一个Slave作为Master，将之前的Master作为Slave
 
@@ -41,7 +91,7 @@ Master-Slave切换后，master_redis.conf、slave_redis.conf和sentinel.conf的�
 
 ![image](https://github.com/Wang520YY/wiki/blob/master/images/sentinel2.jpg)![image](https://github.com/Wang520YY/wiki/blob/master/images/sentinel3.jpg)
 
-**哨兵工作原理**
+## 哨兵工作原理
 
 1.每个sentinel以每秒一次向master、slave、其它sentinel实例发送ping命令
 
