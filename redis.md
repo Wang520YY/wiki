@@ -82,7 +82,7 @@ auto-aof-rewrite-percentage 100 当AOF文件大小超过上一次重写时AOF文
 
 auto-aof-rewirte-min-size 64mb 允许重写的最小AOF文件大小
 
-**同步间隔**
+**AOF同步间隔**
 
 appendfsync everysec 每秒一次
 
