@@ -252,9 +252,24 @@ A->B->C，B中添加log-bin = mysql-bin;log_slave_updates = 1;将会把A的binlo
 
 ## mha(Master High Availability)
 
+在master出现问题后主备会变为master
+
 至少三台服务器，master、slave(spare master)、slave；管理节点的服务器可以跟master一台机器上
 
 两部分组成：MHA Manager、MHA Node
 
 ## keepalived
+**工作原理**
+
+![image](https://github.com/Wang520YY/wiki/blob/master/images/vip.jpg)
+
+VRRP(Virtual Router Redundancy Protocal) 虚拟路由冗余协议，在VRRP中有两组重要的概念：VRRP路由器和虚拟路由器，主控路由器和备份路由器
+
+VRRP路由器是指运行VRRP的路由器，是物理实体，虚拟路由器是指VRRP协议创建的，是逻辑概念。一组VRRP路由器协同工作，共同构成一台虚拟路由器
+
+VRRP中存在着一种选举机制，用以选出提供服务的路由即主控路由，其他的则成了备份路由。当主控路由失效后，备份路由中会重新选举出一个主控路由，来继
+续工作，来保障不间断服务
+
+主控和备份路由器将自己的缺省路由下一跳地址设置为该虚拟路由器的IP 地址10.100.10.1。于是，网络内的主机就通过这个虚拟的路由器来与其它网络进行通信
+
 
