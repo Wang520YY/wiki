@@ -248,5 +248,13 @@ pop队列，主播增加金币
 
 A->B->C，B中添加log-bin = mysql-bin;log_slave_updates = 1;将会把A的binlog记录到自己的binlog中，A是B的主，B是C的主
 
-**单点故障保证高可用：keepalived就可以自动切换master，实现vip漂移**
+# 高可用
+
+## mha(Master High Availability)
+
+至少三台服务器，master、slave(spare master)、slave；管理节点的服务器可以跟master一台机器上
+
+两部分组成：MHA Manager、MHA Node
+
+## keepalived
 
