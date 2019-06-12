@@ -5,7 +5,7 @@
 <!-- GFM-TOC -->
 
 # Tips
-##对比memcache
+## 对比memcache
 **数据一致性**
 
 memcache是多线程(master-worker模式)，可能出现并发锁冲突，可以通过cas命令来保证数据一致性(乐观锁解决方案，gets时获得当前值的唯一标识，修改时判断标识改变了写命令失败)
@@ -102,6 +102,10 @@ appendfsync everysec 每秒一次
 always，每次写入都会执行，不建议，安全但是很慢
 
 no 不主动进行，完全交由操作系统30秒一次，最快但也最不安全
+
+**建议**
+
+在架构良好的环境中，master通常使用AOF，slave使用snapshot，主要原因是master需要首先确保数据完整性，它作为数据备份的第一选择；slave提供只读服务(目前slave只能提供读取服务)，它的主要目的就是快速响应客户端read请求；但是如果你的redis运行在网络稳定性差/物理环境糟糕情况下，建议你master和slave均采取AOF，这个在master和slave角色切换时，可以减少“人工数据备份”/“人工引导数据恢复”的时间成本；如果你的环境一切非常良好，且服务需要接收密集性的write操作，那么建议master采取snapshot，而slave采用AOF
 
 # 哨兵
 哨兵是在主从分离的基础上，Master状态监测，如果Master 异常，则会进行Master-slave 转换，将其中一个Slave作为Master，将之前的Master作为Slave
