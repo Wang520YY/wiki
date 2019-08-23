@@ -6,7 +6,8 @@
 
 **物理CPU**   计算机实际配置的cpu个数，查看命令 cat /proc/cpuinfo | grep "physical id" | sort -u | wc -l
 
-**cpu核数**   cpu上集中处理数据的cpu核心个数，如果核心数1个，个数4个，就是4核， 查看命令 cat /proc/cpuinfo | grep "cpu cores" | uniq | wc -l
+**cpu核数**   cpu上集中处理数据的cpu核心个数，如果核心数1个，个数4个，就是4核
+              查看命令 cat /proc/cpuinfo | grep "cpu cores" | uniq | wc -l
 
 **逻辑cpu**   如果物理cpu支持超线程，逻辑cpu就是核心数的两倍，查看命令 cat /proc/cpuinfo | grep "processor" | wc -l
 
@@ -32,7 +33,7 @@
 
 **cpu运行队列**     
 
-![image](https://github.com/Wang520YY/wiki/blob/master/images/运行队列.png)
+任务1 任务2 任务3 => 运行中任务
 
 一个cpu对应一个运行队列，任务1、2、3均为可执行任务，处于等待阶段
 进程是资源分配的最小单元，线程是系统调度的最下单元
@@ -82,5 +83,6 @@ Z   僵尸状态
 t   追踪停止状态
 
 **常用命令**
+
 ![image](https://github.com/Wang520YY/wiki/blob/master/images/常用命令.png)
 
