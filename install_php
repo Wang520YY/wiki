@@ -16,7 +16,7 @@ php安装：wget  http://cn2.php.NET/distributions/php-7.3.2.tar.gz
 nginx安装：wget http://nginx.org/download/nginx-1.9.9.tar.gz
 	三个依赖：wget http://www.openssl.org/source/openssl-fips-2.0.16.tar.gz
 			  wget http://www.zlib.net/zlib-1.2.11.tar.gz
-			  wget ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-8.42.tar.gz
+			  wget ftp://ftp.pcre.org/pub/pcre/pcre-8.40.tar.gz
 	分别解压安装：./configure（如果没有该文件那就执行这个 ./config） && make && make install
 	没有c++：yum install -y gcc gcc-c++
 	如果nginx不能启动：ln -s /usr/local/lib/libpcre.so.1 /lib【64】
