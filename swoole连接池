@@ -1,0 +1,293 @@
+<?php
+ 
+use Swoole\Coroutine\Channel;
+use Swoole\Timer;
+ 
+/**
+ * 通用连接池
+ * 已达连接池上限且仍然遇到连接数不够时，将当前协程休眠指定时长后再次获取
+ * Class Pool
+ */
+class Pool
+{
+    /**
+     * @var string 资源名称，如db，redis
+     */
+    public $name;
+    /**
+     * @var int 最大连接数
+     */
+    public $max = 100;
+    /**
+     * @var int 最小连接数
+     */
+    public $min = 10;
+    /**
+     * @var callable 连接配置，闭包函数
+     * ```php
+     * 'factory' => function() {
+     *  return new PDO('');
+     * }
+     * ```
+     */
+    public $factory;
+ 
+    /**
+     * @var int 等待连接超时
+     */
+    public $waitTimeout = 10;
+ 
+    /**
+     * @var int 连接空闲时长，超过该时长将被回收
+     */
+    public $idleTimeout = 600;
+ 
+    /**
+     * @var int 检测连接间隔
+     */
+    public $interval = 60;
+ 
+    /**
+     * @var Channel 连接队列
+     */
+    protected $queue = null;
+ 
+    /**
+     * @var int 已打开连接数
+     */
+    protected $open = 0;
+    /**
+     * @var int 定时器
+     */
+    protected $timer = null;
+ 
+    /**
+     * Pool constructor.
+     * @param array $config
+     * @throws Exception
+     */
+    public function __construct(array $config)
+    {
+        foreach ($config as $name => $value) {
+            $this->$name = $value;
+        }
+        $this->init();
+    }
+ 
+    /**
+     * 检测配置
+     * @throws Exception
+     */
+    public function init()
+    {
+        if (empty($this->name)) {
+            throw new Exception("必须配置\"name\"属性");
+        }
+ 
+        if (empty($this->factory)) {
+            throw new Exception("必须配置\"factory\"属性");
+        }
+ 
+        if ($this->min < 0) {
+            throw new Exception("最小连接数不能小于0");
+        }
+ 
+        if ($this->max < $this->min) {
+            throw new Exception("最大连接数不能小于最小连接数");
+        }
+ 
+        if (!is_array($this->factory) && !is_callable($this->factory)) {
+            throw new Exception("\"factory\"必须是array或者闭包函数");
+        }
+    }
+ 
+    /**
+     * 启动连接池
+     * 由于连接资源进程间不共享，因此需要在workerStart回调内调用本方法
+     */
+    public function bootstrap()
+    {
+        $this->queue = new Channel($this->max);
+        for ($i = 0; $i < $this->min; $i++) {
+            $this->open++;
+            $this->queue->push($this->createConnection());
+        }
+        $this->timer = Timer::tick($this->interval * 1000, [$this, 'runIdle']);
+        printf("pool bootstrapped. name=%s, min=%d, max=%d\n", $this->name, $this->min, $this->max);
+    }
+ 
+    /**
+     * 回收空闲连接
+     */
+    public function runIdle()
+    {
+        $size = $this->queue->length();
+        for ($i = 0; $i < $size; $i++) {
+            $connection = $this->queue->pop();
+            // 检测最后一次活跃时间到现在的时间间隔
+            $idle = time() - $connection['last_active'];
+            if ($idle > $this->idleTimeout) {
+                unset($connection['connection']);
+                continue;
+            }
+            $this->queue->push($connection);
+        }
+    }
+ 
+    /**
+     * 创建连接
+     * @return array
+     */
+    protected function createConnection()
+    {
+        $connection = call_user_func($this->factory);
+        return [
+            'connection' => $connection, // 底层连接
+            'last_active' => time(), // 最后活跃时间
+        ];
+    }
+ 
+    /**
+     * 获取连接
+     * @return array|mixed
+     * @throws Exception
+     */
+    public function acquire()
+    {
+        // 池中还有连接，直接使用
+        if ($this->queue->length() > 0) {
+            $connection = $this->queue->pop();
+            $connection['last_active'] = time();
+            return $connection;
+        }
+ 
+        // 池中无连接且当前已打开连接数小于最大连接数，创建连接数
+        if ($this->open < $this->max) {
+            $this->open++;
+            try {
+                return $this->createConnection();
+            } catch (Throwable $e) {
+                $this->open--;
+                printf("failed to open connection: {$e->getMessage()}\n");
+            }
+        }
+        // 协程休眠超时时间
+        $connection = $this->queue->pop($this->waitTimeout);
+        if ($connection !== false) {
+            $connection['last_active'] = time();
+            return $connection;
+        }
+        // 抛出异常
+        throw new Exception("连接池已超过打开上限. 最大连接: {$this->max}， 当前打开: {$this->open}");
+    }
+ 
+    /**
+     * 归还连接
+     * @param array $connection
+     */
+    public function release(array $connection)
+    {
+        $this->queue->push($connection);
+    }
+ 
+    /**
+     * 使用闭包获取连接后执行逻辑，执行完毕自动回收链接
+     * @param callable $callable
+     * @return mixed
+     * @throws Exception
+     */
+    public function use($callable)
+    {
+        $connection = $this->acquire();
+        try {
+            return call_user_func($callable, $connection['connection']);
+        } finally {
+            $this->release($connection);
+        }
+    }
+ 
+    /**
+     * 清除定时器
+     */
+    public function __destruct()
+    {
+        if ($this->timer) {
+            Timer::clear($this->timer);
+        }
+    }
+ 
+    public function __toString()
+    {
+        return sprintf("%d - Pool", posix_getpid());
+    }
+}
+
+
+##实现
+
+<?php
+ 
+use Swoole\Coroutine\MySQL;
+use Swoole\Http\Request;
+use Swoole\Http\Response;
+use Swoole\Http\Server;
+ 
+require __DIR__ . '/Pool.php';
+ 
+$redisPool = new Pool([
+    'name' => 'redis',
+    'factory' => function () {
+        $redis = new Redis();
+        if (!$redis->connect('localhost', 6379)) {
+            throw new Exception('链接redis失败:' . $redis->getLastError());
+        }
+        return $redis;
+    }
+]);
+ 
+$databasePool = new Pool([
+    'name' => 'db',
+    'factory' => function () {
+        $m = new MySQL();
+        $m->connect([
+            'host' => '127.0.0.1',
+            'port' => 3306,
+            'user' => 'root',
+            'password' => 'root',
+            'database' => 'test',
+        ]);
+        if (!$m->connected) {
+            throw new Exception("连接数据库失败:{$m->connect_error}", $m->connect_errno);
+        }
+        return $m;
+    }
+]);
+ 
+$server = new Server("localhost", 10000, SWOOLE_PROCESS, SWOOLE_SOCK_TCP);
+$server->set([
+    'worker_num' => 1
+]);
+$server->on('workerStart', function (Server $server, $workerId) use ($databasePool, $redisPool) {
+    $redisPool->bootstrap();
+    $databasePool->bootstrap();
+});
+ 
+$server->on('request', function (Request $request, Response $response) use ($databasePool, $redisPool) {
+    $redisPool->use(function (Redis $redis) use ($databasePool, $response) {
+        // 读取redis
+        $data = $redis->get('db_version');
+        if (!empty($data)) {
+            $response->end($data);
+            return;
+        }
+        // 读取数据库
+        $databasePool->use(function (MySQL $conn) use ($response, $redis) {
+            $data = $conn->query('SELECT VERSION() as version');
+            // 保存数据到redis
+            $redis->set('db_version', $data[0]['version']);
+            $response->end($data[0]['version']);
+        });
+    });
+});
+ 
+$server->start();
