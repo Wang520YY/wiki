@@ -43,7 +43,7 @@
 SnowFlake算法
 SnowFlake是Twitter公司所采用的一种ID生成算法，最初目的就是在分布式系统中生成全局唯一且趋势递增的ID。目前国内互联网公司的ID生成器，都或多或少的借鉴了这种方式。
 
-  
+  ![image](https://github.com/Wang520YY/wiki/blob/master/images/snowFlake.jpg)
 
 1、第1位代表符号位，始终为0；
 
