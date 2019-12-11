@@ -144,6 +144,19 @@ MyIsam：
 
 写锁(排它锁)：阻塞其它写和读，事务对这个数据加上这个锁后就可写可读
 
+**死锁分析**
+update tab_test set state=1064,time=now() where state=1061 and time < date_sub(now(), INTERVAL 30 minute)
+执行时，MySQL会使用state索引，因此首先锁定相关的索引记录，因为state是非主键索引，执行该语句，MySQL还会锁定主键索引
+
+update tab_test set state=1067,time=now () where id in (9921180)
+假设几乎同时执行时，本语句首先锁定主键索引，由于需要更新state的值，所以还需要锁定state的某些索引记录
+
+这样第一条语句锁定了state的记录，等待主键索引，而第二条语句则锁定了主键索引记录，而等待state的记录，这样死锁就产生了
+
+解决办法
+   拆分第一条sql，先查出符合条件的主键值，再按照主键更新记录：
+   select id from tab_test where state=1061 and time < date_sub(now(), INTERVAL 30 minute);
+   update tab_test state=1064,time=now() where id in(......);
 
 # explain
 **type**
