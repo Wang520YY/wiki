@@ -1,8 +1,0 @@
-底层数据结构
-1、动态字符串SDS
-struct sdshdr {
- int len;
- int free;
- char buf[];
-}
-
