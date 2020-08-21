@@ -38,7 +38,7 @@ struct linkedlist {
 
 **1、双向无环，head的prew和tail的next都指向NULL**
 
-##3、字典（map）
+## 3、字典（map）
 ```
 struct dictht {
   //哈希表
@@ -70,7 +70,7 @@ struct dictEntry {
 
 **3、数据量大的时候，渐进式的rehash，保证可靠性，查询时会在新旧哈希表中查找**
 
-##4、跳跃表
+## 4、跳跃表
 ```
 struct zskiplistNode {
   struct zskiplistLevel {
@@ -95,7 +95,7 @@ struct zskiplist {
 
 **2、使用抛硬币决定层数，也就是趋近1/2的层数为2层**
 
-##5、整数集合
+## 5、整数集合
 ```
 struct intset {
   uint32_t encoding;
@@ -112,7 +112,7 @@ struct intset {
 
 **不支持降级，节约空间，不固定在一种类型**
 
-##6、压缩列表
+## 6、压缩列表
 ```
 //内存字节数、用于内存重新分配、计算zlend地址
 uint32_t zlbytes;
@@ -134,7 +134,7 @@ contents;
 
 **1、集中存储、节省内存，由一系列特殊编码的连续内存块组成的顺序型数据结构**
 
-##7、快速列表（3.2后用于list的底层数据结构）
+## 7、快速列表（3.2后用于list的底层数据结构）
 ```
 struct quicklist {
    quicklistNode* head;
@@ -178,7 +178,7 @@ struct quicklistLZF {
 
 **4、考虑到linkedList的prew和next空间占用大，且每个节点是单独分配，内存碎片化，影响内存管理效率**
 
-##7、redis对象
+## 8、redis对象
 ```
 struct redisObject {
    //五大数据类型之一
