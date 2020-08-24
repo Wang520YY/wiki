@@ -194,3 +194,59 @@ struct redisObject {
 ```
 
 **位段：type [var] : digits  digits表示该位段所占二进制位数，节约空间**
+
+# 五大数据类型使用的底层数据结构
+## 1、string
+
+**1、底层使用int｜embstr｜raw**
+
+**2、int为long类型，超过long范围升级为raw**
+
+**3、raw最大长度44字节，保存长字符串，分配两次内存（redisObject、sdshdr）**
+
+**4、embstr最大长度44字节，保存短字符串，分配一次内存，redisObject和sds是连续的**
+
+**增加长度需要重新分配内存，因此设置为只读**
+
+**string最大长度为512M**
+
+## set
+
+**1、底层使用intset｜hashtable**
+
+**2、不可重复的无序集合，数据量大时用hashtable，查询效率高**
+
+**3、集合中所有元素都是整数，且数量不超过512，使用intset**
+
+## zset
+
+**1、底层使用ziplist｜skiplist**
+
+**2、使用ziplist，第一个节点保存元素，第二个保存分数，按分值大小递增排序**
+
+**3、当数量小于128且每个长度小于64字节，使用ziplist**
+
+**4、当使用skiplist时实际zset当结构时这样的**
+
+```
+struct zset {
+   zskiplist *zsl;
+   dict *dict;
+}
+```
+
+**实际包含一个字典和跳跃表，字典键保存元素的值，值保存元素的分值。跳跃表节点obj保存值，score保存分值，通过指针来共享元素的成员和分值**
+
+**无序字典用于O(1)查找值与分值的对应关系；有序跳跃表用于O(logn)根据分值查询值或范围查找**
+
+## list
+
+**底层使用ziplist｜linkedlist｜quicklist（3.2以后）**
+
+**列表小于512且小于64字节使用ziplist**
+
+## hash
+
+**底层使用ziplist｜hashtable**
+
+**列表长度小于512且小于64字节使用ziplist**
