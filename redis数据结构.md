@@ -1,3 +1,15 @@
+<!-- GFM-TOC -->
+* [底层数据结构](#底层数据结构)
+* [1、动态字符串SDS](##1、动态字符串SDS)
+* [索引](索引)
+* [存储引擎](#存储引擎)
+* [锁](#锁)
+* [explain](#explain)
+* [分区分库分表](#分区分库分表)
+* [主从复制原理](#主从复制原理)
+* [高可用](#高可用)
+<!-- GFM-TOC -->
+
 # 底层数据结构
 ## 1、动态字符串SDS
 ```
@@ -38,7 +50,7 @@ struct linkedlist {
 
 **1、双向无环，head的prew和tail的next都指向NULL**
 
-## 3、字典（map）
+## 3、字典dict（map）
 ```
 struct dictht {
   //哈希表
@@ -210,7 +222,7 @@ struct redisObject {
 
 **string最大长度为512M**
 
-## set
+## 2、set
 
 **1、底层使用intset｜hashtable**
 
@@ -218,7 +230,7 @@ struct redisObject {
 
 **3、集合中所有元素都是整数，且数量不超过512，使用intset**
 
-## zset
+## 3、zset
 
 **1、底层使用ziplist｜skiplist**
 
@@ -239,14 +251,14 @@ struct zset {
 
 **无序字典用于O(1)查找值与分值的对应关系；有序跳跃表用于O(logn)根据分值查询值或范围查找**
 
-## list
+## 4、list
 
 **底层使用ziplist｜linkedlist｜quicklist（3.2以后）**
 
 **列表小于512且小于64字节使用ziplist**
 
-## hash
+## 5、hash
 
-**底层使用ziplist｜hashtable**
+**底层使用ziplist｜dict**
 
 **列表长度小于512且小于64字节使用ziplist**
